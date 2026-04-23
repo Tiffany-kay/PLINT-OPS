@@ -1,0 +1,42 @@
+name: plint-agents
+
+services:
+  app-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: plintcart-app-agent
+    restart: unless-stopped
+    env_file:
+      - ./runtime/app-agent.env
+    volumes:
+      - ./identity/app-agent:/workspace/identity:rw
+      - ./data/app-agent:/workspace/data:rw
+      - ./logs/app-agent:/workspace/logs:rw
+    command: ["openclaw", "gateway"]
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f openclaw >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  stewie:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: stewie-personal-agent
+    restart: unless-stopped
+    env_file:
+      - ./runtime/stewie.env
+    volumes:
+      - ./identity/stewie:/workspace/identity:rw
+      - ./data/stewie:/workspace/data:rw
+      - ./logs/stewie:/workspace/logs:rw
+    command: ["openclaw", "gateway"]
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f openclaw >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
