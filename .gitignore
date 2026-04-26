@@ -1,7 +1,9 @@
 # plint-ops: operational repo secrets
 # Ignore operational secrets and common build artifacts
 openclaw.json
-openclaw*
+openclaw.json
+openclaw.env
+openclaw.local
 *.openclaw.json
 openclaw/
 

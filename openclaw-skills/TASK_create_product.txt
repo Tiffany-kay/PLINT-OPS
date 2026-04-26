@@ -1,0 +1,147 @@
+# STEWIE TASK: CREATE PRODUCT FROM IMAGE
+
+## WHEN TO RUN
+When user sends an image with context like "add this product" or "new product"
+
+## WORKFLOW
+
+1. ANALYZE IMAGE
+   - Identify product type
+   - Note colors, materials, features
+   - Estimate quality tier
+
+2. GENERATE CONTENT
+   - Product name (clear, searchable)
+   - Description (150-300 chars, SEO-friendly)
+   - Category (from list below)
+   - Tags (5-8 relevant keywords)
+   - Suggested price (research-based)
+
+3. CONFIRM WITH USER
+   - Show generated details
+   - Allow edits
+   - Get approval
+
+4. CREATE IN FIREBASE
+   - Add to products collection
+   - Set as visible
+   - Initialize stock
+
+## CATEGORIES FOR PLINT
+
+Choose the most appropriate:
+- Electronics & Technology
+- Clothing & Fashion
+- Home & Garden
+- Jewelry & Accessories
+- Books & Media
+- Toys & Games
+- Food & Beverages
+- Restaurant & Catering
+- Bakery & Desserts
+- Beauty & Personal Care
+- Health & Wellness
+- Professional Services
+- Hardware & Tools
+- Sports & Outdoors
+- Arts & Crafts
+- Pet Supplies
+- Automotive
+- Digital Downloads
+- Software & Apps
+- Online Courses
+- Other
+
+## DESCRIPTION GUIDELINES
+
+Good description formula:
+"[Material/Quality] [Product Type] with [Key Feature]. [Benefit to customer]. [Use case/occasion]."
+
+Examples:
+- "Genuine leather bifold wallet with RFID protection. Slim profile fits comfortably in any pocket. Perfect for everyday carry."
+- "Wireless bluetooth earbuds with active noise cancellation. Crystal-clear audio for calls and music. Up to 8 hours playtime."
+
+## PRICING STRATEGY
+
+Consider:
+1. Product quality (budget/mid/premium)
+2. Market comparisons
+3. Target margin (aim for 40-60%)
+4. Local market (KES pricing)
+
+Price tiers (KES):
+- Budget: 500-2,000
+- Mid-range: 2,000-5,000
+- Premium: 5,000-15,000
+- Luxury: 15,000+
+
+## FIREBASE DOCUMENT STRUCTURE
+
+```javascript
+const product = {
+  name: "Product Name",
+  description: "Description here...",
+  price: 2500,
+  category: "Electronics & Technology",
+  imageUrl: "base64 or uploaded URL",
+  isVisible: true,
+  userId: "merchant_id",  // Get from context
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  
+  // Stock
+  stockQuantity: 10,  // Default or ask user
+  trackStock: true,
+  minStockLevel: 5,
+  stockStatus: "in_stock",
+  
+  // Optional
+  tags: ["tag1", "tag2"],
+  featured: false,
+  salePrice: null
+};
+```
+
+## CONVERSATION FLOW
+
+```
+User: [sends image of headphones]
+"Add this product"
+
+Stewie: 📸 Analyzing image...
+
+I see wireless over-ear headphones. Here's what I've prepared:
+
+📦 Product Details
+• Name: Premium Wireless Over-Ear Headphones
+• Category: Electronics & Technology
+• Price: KES 4,500 (suggested)
+
+📝 Description
+"Premium wireless headphones with cushioned ear cups and foldable design. Deep bass and clear highs for immersive audio. Up to 20 hours battery life."
+
+🏷️ Tags: headphones, wireless, bluetooth, audio, music, over-ear
+
+📊 Initial Stock: 10 units
+
+Ready to publish?
+• "yes" - Create product now
+• "price 5000" - Change price
+• "stock 20" - Change initial stock
+• "edit" - Modify details
+```
+
+## IMAGE HANDLING
+
+If user sends image via Telegram/Discord:
+1. Download image
+2. Compress if > 2MB
+3. Convert to base64 (for Firebase Storage limitation workaround)
+   OR upload to Firebase Storage and get URL
+4. Store URL in product.imageUrl
+
+## ERROR CASES
+
+- Blurry image: "Could you send a clearer photo? I'm having trouble identifying the product."
+- Multiple items: "I see multiple products. Which one should I add? You can send them one at a time."
+- Category unclear: "This could be [A] or [B]. Which category fits better for your store?"

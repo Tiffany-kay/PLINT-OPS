@@ -1,0 +1,233 @@
+# OpenClaw Configuration for Plint
+# Copy this to: ~/.openclaw/config.yaml
+
+# ====================================
+# PERSONA (Your AI's personality)
+# ====================================
+persona:
+  name: "PlintBot"
+  personality: |
+    You are PlintBot, an efficient e-commerce assistant for Plint stores.
+    You help business owners manage their stores via chat.
+    
+    Your traits:
+    - Professional but friendly
+    - Proactive about problems
+    - Data-driven recommendations
+    - Quick to take action
+    
+    Always:
+    - Provide specific numbers when discussing metrics
+    - Suggest next actions
+    - Warn about potential issues
+    - Celebrate wins with the owner
+
+# ====================================
+# LLM PROVIDER (OpenRouter - Free tier)
+# ====================================
+llm:
+  provider: openrouter
+  apiKey: "${OPENROUTER_API_KEY}"  # Set in environment
+  
+  # Model routing for cost optimization
+  models:
+    default: "anthropic/claude-3.5-sonnet"
+    fast: "google/gemini-flash-1.5"
+    cheap: "meta-llama/llama-3.1-8b-instruct"
+    vision: "anthropic/claude-3.5-sonnet"
+  
+  # Route queries to appropriate model
+  routing:
+    - pattern: "what time|hello|hi|hey"
+      model: cheap
+    - pattern: "analyze|summarize|report"
+      model: default
+    - pattern: "image|photo|picture"
+      model: vision
+    - pattern: "*"
+      model: fast
+
+# ====================================
+# INTEGRATIONS
+# ====================================
+integrations:
+  # Telegram (Primary interface)
+  telegram:
+    enabled: true
+    botToken: "${TELEGRAM_BOT_TOKEN}"
+    allowedUsers: []  # Add your Telegram user IDs
+    features:
+      - text
+      - images
+      - voice  # (optional)
+      - callbacks
+  
+  # WhatsApp (Optional, for customer notifications)
+  whatsapp:
+    enabled: false
+    # Configure if you have WhatsApp Business API
+  
+  # Firebase (Plint's database)
+  firebase:
+    enabled: true
+    projectId: "${FIREBASE_PROJECT_ID}"
+    credentialsPath: "~/.openclaw/credentials/firebase-key.json"
+    
+  # Browser (for web automation)
+  browser:
+    enabled: true
+    headless: true
+    
+  # File system (for reports, exports)
+  filesystem:
+    enabled: true
+    allowedPaths:
+      - "~/Desktop/ForStewie/plint"
+      - "~/.openclaw"
+
+# ====================================
+# MEMORY (Persistent knowledge)
+# ====================================
+memory:
+  enabled: true
+  type: "local"  # Stores on your machine
+  
+  # What to remember
+  categories:
+    - business_metrics
+    - customer_interactions
+    - product_performance
+    - user_preferences
+  
+  # Auto-summarize old memories
+  summarization:
+    enabled: true
+    threshold: 1000  # entries before summarizing
+
+# ====================================
+# SKILLS (Automations)
+# ====================================
+skills:
+  directory: "~/.openclaw/skills"
+  autoload: true
+  
+  # Enable specific skills
+  enabled:
+    - plint-store-monitor
+    - plint-product-generator
+    - plint-order-processor
+    - plint-analytics-reporter
+    - plint-customer-support
+
+# ====================================
+# SCHEDULED TASKS (Cron jobs)
+# ====================================
+schedule:
+  # Morning briefing
+  - name: "Daily Briefing"
+    cron: "0 8 * * *"
+    skill: "plint-analytics-reporter"
+    action: "send_daily_report"
+    
+  # Stock check every 4 hours
+  - name: "Stock Monitor"
+    cron: "0 */4 * * *"
+    skill: "plint-store-monitor"
+    action: "check_low_stock"
+    
+  # Payment reminders
+  - name: "Payment Follow-up"
+    cron: "0 10,14,18 * * *"
+    skill: "plint-order-processor"
+    action: "remind_pending_payments"
+    
+  # Weekly report
+  - name: "Weekly Summary"
+    cron: "0 9 * * MON"
+    skill: "plint-analytics-reporter"
+    action: "send_weekly_report"
+
+# ====================================
+# WEBHOOKS (Real-time triggers)
+# ====================================
+webhooks:
+  enabled: true
+  port: 3847
+  
+  endpoints:
+    - path: "/plint/new-order"
+      skill: "plint-order-processor"
+      action: "handle_new_order"
+      
+    - path: "/plint/payment-confirmed"
+      skill: "plint-order-processor"
+      action: "process_payment"
+      
+    - path: "/plint/low-stock"
+      skill: "plint-store-monitor"
+      action: "alert_low_stock"
+
+# ====================================
+# NOTIFICATIONS (Where to send alerts)
+# ====================================
+notifications:
+  channels:
+    primary: telegram
+    fallback: email
+    
+  rules:
+    - event: "new_order"
+      urgency: high
+      channels: [telegram]
+      
+    - event: "low_stock"
+      urgency: medium
+      channels: [telegram]
+      
+    - event: "daily_report"
+      urgency: low
+      channels: [telegram]
+      
+    - event: "error"
+      urgency: critical
+      channels: [telegram, email]
+
+# ====================================
+# RATE LIMITS (Cost control)
+# ====================================
+limits:
+  # Daily spending cap
+  dailyBudget: 0.50  # USD
+  
+  # Queries per minute
+  queriesPerMinute: 20
+  
+  # Image analyses per day
+  visionQueriesPerDay: 50
+  
+  # Actions when limit reached
+  onLimitReached: "notify_and_queue"
+
+# ====================================
+# LOGGING
+# ====================================
+logging:
+  level: "info"  # debug, info, warn, error
+  file: "~/.openclaw/logs/plint.log"
+  rotation: "daily"
+  retention: 7  # days
+
+# ====================================
+# SECURITY
+# ====================================
+security:
+  # Require confirmation for sensitive actions
+  confirmationRequired:
+    - "delete_product"
+    - "bulk_update"
+    - "change_prices"
+    
+  # Sandbox dangerous operations
+  sandboxed:
+    - shell_commands
+    - file_deletion

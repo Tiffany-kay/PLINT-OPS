@@ -1,0 +1,143 @@
+# STEWIE TASK: PROCESS NEW ORDER
+
+## WHEN TO RUN
+When notified of new order, or asked "process orders"
+
+## ORDER WORKFLOW
+
+```
+NEW ORDER
+    │
+    ▼
+CHECK PAYMENT STATUS
+    │
+    ├─── PAID ──────────────┐
+    │                       │
+    ├─── PENDING ───┐       │
+    │               │       │
+    └─── FAILED     │       │
+         │          │       │
+         ▼          ▼       ▼
+      NOTIFY    SEND     UPDATE
+      OWNER    REMINDER   STOCK
+                  │       │
+                  │       ▼
+                  │    NOTIFY
+                  │   CUSTOMER
+                  │       │
+                  │       ▼
+                  └─── COMPLETE
+```
+
+## STEP BY STEP
+
+### 1. Get Order Details
+```javascript
+const order = await getDoc(doc(db, 'orders', orderId));
+// Fields: customerName, customerPhone, total, status, paymentStatus, items
+```
+
+### 2. Check Payment
+- M-Pesa: paymentStatus === 'paid' or check mpesa-status endpoint
+- Crypto: Verify transaction on Base
+- Cash: paymentStatus === 'cod_pending'
+
+### 3. If Payment Confirmed:
+```javascript
+// Update order status
+await updateDoc(orderRef, { status: 'confirmed', paymentConfirmedAt: new Date() });
+
+// Deduct stock for each item
+for (item of order.items) {
+  await updateStock(item.productId, -item.quantity);
+}
+```
+
+### 4. Notify Customer (WhatsApp format)
+```
+✅ Order Confirmed!
+
+Hi [Name], your order #[ID] is confirmed!
+
+📦 [Product Name]
+💰 KES [Amount]
+✅ Payment received
+
+We'll let you know when it ships!
+
+Thank you for shopping with us! 🛍️
+```
+
+### 5. Notify Owner
+```
+🛒 Order #[ID] - CONFIRMED
+
+Customer: [Name]
+Phone: [Number]
+Product: [Name]
+Amount: KES [Amount]
+
+Stock updated. Ready to ship!
+Reply "ship [ID]" when dispatched.
+```
+
+## IF PAYMENT PENDING
+
+Wait 30 minutes, then send reminder:
+```
+⏰ Payment Reminder
+
+Hi [Name], your order #[ID] is waiting for payment.
+
+Product: [Name]
+Amount: KES [Amount]
+
+Pay via M-Pesa:
+1. Go to M-Pesa > Lipa na M-Pesa
+2. Paybill: [Number]
+3. Account: [Order ID]
+4. Amount: [Amount]
+
+Questions? Reply here!
+```
+
+## STOCK UPDATE LOGIC
+
+```javascript
+async function updateStock(productId, quantityChange) {
+  const productRef = doc(db, 'products', productId);
+  const product = await getDoc(productRef);
+  const currentStock = product.data().stockQuantity || 0;
+  const newStock = currentStock + quantityChange; // negative for deduction
+  
+  await updateDoc(productRef, {
+    stockQuantity: newStock,
+    stockStatus: newStock === 0 ? 'out_of_stock' : 
+                 newStock <= product.data().minStockLevel ? 'low_stock' : 'in_stock'
+  });
+  
+  // Log transaction
+  await addDoc(collection(db, 'stockTransactions'), {
+    productId,
+    type: quantityChange < 0 ? 'sold' : 'addition',
+    quantity: Math.abs(quantityChange),
+    previousStock: currentStock,
+    newStock: newStock,
+    timestamp: new Date()
+  });
+}
+```
+
+## ERROR HANDLING
+
+- Stock insufficient: Alert owner, offer alternatives
+- Payment failed: Notify customer with retry instructions
+- Product not found: Flag for review
+
+## COMMANDS TO SUPPORT
+
+"process order 123"     - Handle specific order
+"process all pending"   - Batch process
+"ship 123"              - Mark as shipped
+"cancel 123"            - Cancel and refund
+"refund 123"            - Process refund only

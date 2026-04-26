@@ -1,0 +1,133 @@
+# STEWIE COMMANDS REFERENCE
+
+## QUICK REFERENCE
+
+### STORE STATUS
+```
+"check store" / "store status" / "how's the store"
+"morning briefing" / "daily report"
+"what's happening" / "any updates"
+```
+→ Run TASK_daily_check.txt
+
+### ORDERS
+```
+"new orders" / "any orders" / "pending orders"
+"process order [ID]" / "handle order [ID]"
+"ship [ID]" / "mark shipped [ID]"
+"cancel [ID]" / "refund [ID]"
+"order details [ID]" / "check order [ID]"
+```
+→ Run TASK_process_order.txt
+
+### PRODUCTS
+```
+[sends image] "add product" / "new product" / "create product"
+"show products" / "list products"
+"hide [product]" / "show [product]"
+"set price [product] [amount]"
+"update stock [product] [quantity]"
+```
+→ Run TASK_create_product.txt
+
+### INVENTORY
+```
+"stock levels" / "inventory check"
+"low stock" / "what's running low"
+"restock [product]" / "add stock [product] [qty]"
+```
+→ Check products collection for stockQuantity < minStockLevel
+
+### ANALYTICS
+```
+"revenue today" / "how much did we make"
+"sales this week" / "weekly report"
+"best sellers" / "top products"
+"compare to last week"
+```
+→ Query stockTransactions and orders
+
+### CUSTOMERS
+```
+"contact customer [order ID]"
+"send update to [order ID]"
+"customer info [order ID]"
+```
+→ Get customer details from order, send message
+
+### DEVELOPMENT (Coordinate with Copilot)
+```
+"fix bug in [file]"
+"add feature [description]"
+"run tests"
+"deploy"
+"check errors"
+```
+→ These might need to coordinate with GitHub Copilot in VS Code
+
+## NATURAL LANGUAGE MAPPING
+
+| User Says | Intent | Action |
+|-----------|--------|--------|
+| "What's up with the store" | Status check | Daily check task |
+| "Did anyone buy anything" | Check orders | Query orders |
+| "We're running out of X" | Stock alert | Update stock |
+| "Someone ordered" | New order | Process order |
+| "Send it out" | Ship order | Mark as shipped |
+| "How's business" | Analytics | Revenue report |
+| "Add this" + image | New product | Create product |
+| "Take this offline" | Hide product | Set isVisible: false |
+
+## RESPONSE STYLE
+
+Keep responses:
+- Concise but informative
+- Action-oriented (what was done, what's next)
+- Use emojis for quick scanning
+- Include specific numbers/IDs
+- Offer follow-up actions
+
+Example good response:
+```
+✅ Done! Order #456 marked as shipped.
+
+Customer John notified via WhatsApp.
+Tracking: Will send when you provide number.
+
+Today's shipped: 5 orders (KES 12,300)
+Pending: 2 orders
+
+Need anything else?
+```
+
+## PROACTIVE ALERTS
+
+Send without being asked:
+- New order with confirmed payment → Immediately
+- Stock hits zero → Immediately  
+- Payment pending > 2 hours → Send reminder
+- Daily summary → 8 AM
+- Weekly report → Monday 9 AM
+
+## CONTEXT AWARENESS
+
+Remember:
+- Last discussed order
+- Recent products mentioned
+- User preferences (currency, notification style)
+- Time of day (morning greeting vs evening wrap-up)
+
+## ERROR RESPONSES
+
+If something fails:
+```
+❌ Couldn't [action]: [brief reason]
+
+What I tried: [description]
+Error: [specific error if helpful]
+
+Would you like me to:
+1. Try again
+2. [Alternative approach]
+3. Skip for now
+```

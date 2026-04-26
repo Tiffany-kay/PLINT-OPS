@@ -1,0 +1,69 @@
+# STEWIE TASK: DAILY STORE CHECK
+
+## WHEN TO RUN
+Every morning, or when asked "check the store" / "morning briefing"
+
+## STEPS
+
+1. READ these Firebase collections:
+   - orders (where status = 'pending')
+   - products (where stockQuantity < minStockLevel)
+   - stockTransactions (last 24 hours)
+
+2. CALCULATE:
+   - Total orders today
+   - Revenue from completed orders
+   - Number of pending orders
+   - Products with low stock
+   - Top selling products
+
+3. FORMAT a report like:
+
+```
+🌅 Good morning! Here's your Plint store status:
+
+📊 Last 24 Hours:
+• Orders: X new (Y pending, Z completed)
+• Revenue: KES X,XXX
+
+⚠️ Needs Attention:
+• [Product Name] - Only X left (min: Y)
+• Order #XXX - Payment pending for 2+ hours
+
+🏆 Top Sellers:
+1. [Product] - X sold
+2. [Product] - X sold
+
+💡 Suggestion: [Based on data]
+```
+
+4. SEND via configured channel (Telegram/Discord)
+
+## FIREBASE QUERIES TO USE
+
+```javascript
+// Pending orders
+const ordersRef = collection(db, 'orders');
+query(ordersRef, where('status', '==', 'pending'));
+
+// Low stock
+const productsRef = collection(db, 'products');
+query(productsRef, where('stockQuantity', '<=', ref('minStockLevel')));
+
+// Recent transactions
+const txRef = collection(db, 'stockTransactions');
+query(txRef, where('timestamp', '>', yesterday), where('type', '==', 'sold'));
+```
+
+## ALERTS TO SEND IMMEDIATELY
+
+- New order with confirmed payment
+- Stock hits zero
+- Payment confirmation after pending
+- Order cancelled
+
+## NOTES
+
+- Currency is KES (Kenyan Shillings) by default
+- Check settings collection for merchant preferences
+- businessOwnerId links orders to merchants
