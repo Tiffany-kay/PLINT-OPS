@@ -19,3 +19,21 @@ The screenshots in this post tell that story in order. First the working default
 - `img-08-second-channel-success.png` - the second channel finally working
 
 If you want the short version, it was not a permissions problem alone and it was not an OpenClaw problem alone. It was a small stack of things that all needed to be correct at the same time.
+
+## The Commands That Helped
+
+```bash
+openclaw config set channels.discord.enabled true --strict-json
+openclaw gateway restart
+```
+
+```bash
+docker ps --format "table {{.Names}}\t{{.Ports}}\t{{.Status}}"
+docker logs stewie_gateway --tail 50
+```
+
+```bash
+curl -i http://127.0.0.1:18789
+```
+
+Those commands did not magically fix everything on their own. They made the failure visible, and then they confirmed the fix after the config and restart were in place.

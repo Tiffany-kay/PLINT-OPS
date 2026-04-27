@@ -1,16 +1,41 @@
-# Permission Hell: Why EACCES Was a System Design Problem, Not a Random Error
+# Permission Hell: Why `EACCES` Felt Like the Container Was Gaslighting Me
 
-At some point in the week I ran into a classic `EACCES` problem, and it had that special kind of frustration that only permission errors can give you. The service looked fine. The config looked fine. The failure only showed up when the process actually tried to write something.
+There are errors that are annoying, and then there are permission errors that feel personal.
 
-That was the part that finally clicked for me: the process could see the path, but it could not own the path. So the setup was not really broken in a dramatic way. It was just misaligned with how the runtime user and the mounted files were supposed to work together.
+This one started like a lie. The service booted. The config looked right. Everything seemed normal until the first time the runtime tried to write something and the container basically shrugged and said no.
 
-Once I stopped trying to treat it like a random glitch and looked at the UID, the mount, and the writable paths, the fix became obvious. The process needed a place it could actually write to, and the ownership had to match the user running the container. After that, the errors stopped feeling mysterious.
+That was the ugly part: the app was not dead. It could see the path. It just could not use it. The runtime user and the mounted files were not aligned, so every write attempt turned into a reminder that ownership matters more than optimism.
 
-## Screenshots in This Post
-- `img-19-permission-error-eacces-log.png` - the first failure message
-- `img-20-runtime-user-and-uid.png` - the runtime user identity
-- `img-21-mounted-path-permissions-before-fix.png` - the bad ownership state
-- `img-22-mounted-path-permissions-after-fix.png` - the corrected permissions
-- `img-23-successful-write-after-fix.png` - the write working again
+Once I stopped treating it like random container drama and looked at the actual UID, mount ownership, and writable paths, the fix became plain. The process needed somewhere it could write, and that path needed to belong to the user actually running the service.
 
-The lesson here was simple: permissions are not a side detail. They are part of the system design, and if you get them wrong, the whole app reminds you in the least polite way possible.
+## The Receipts
+
+The screenshots show the whole situation without me having to relive it twice:
+
+- `img-19-permission-error-eacces-log.png` — the write failure that started the headache
+- `img-20-runtime-user-and-uid.png` — the runtime identity I had to check
+- `img-21-mounted-path-permissions-before-fix.png` — the wrong ownership state
+- `img-22-mounted-path-permissions-after-fix.png` — the corrected permission setup
+- `img-23-successful-write-after-fix.png` — the moment the write finally worked
+
+## What I Learned
+
+Permissions are not a side quest.
+
+They are part of the design. If the runtime cannot write where it needs to write, the app will fail in the most boring and stubborn way possible. And once you fix it properly, the whole system gets quieter immediately.
+
+## The Commands That Helped
+
+```bash
+id
+whoami
+ls -la /home/node/.openclaw
+ls -la /home/node/.openclaw/workspace
+```
+
+```bash
+sudo chown -R 10001:10001 /home/node/.openclaw/workspace
+sudo chmod -R u+rwX /home/node/.openclaw/workspace
+```
+
+If the writable path itself was wrong, I moved the state to a path the runtime user could actually own and write to.
